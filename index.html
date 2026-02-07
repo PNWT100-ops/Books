@@ -16,7 +16,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #d7ccc8 0%, #bcaaa4 100%);
             min-height: 100vh;
             padding: 20px;
             padding-bottom: 80px;
@@ -43,7 +43,7 @@
             border-radius: 12px;
             font-size: 16px;
             font-weight: 600;
-            color: #667eea;
+            color: #6b4700;
             cursor: pointer;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             margin-bottom: 30px;
@@ -75,12 +75,47 @@
             background: #f8f9fa;
             border-radius: 12px;
             padding: 16px;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
             transition: all 0.2s;
+            border: 2px solid #e8e8e8;
+            position: relative;
         }
 
         .book-item:last-child {
             margin-bottom: 0;
+        }
+
+        .book-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .book-header-left {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px 8px;
+            line-height: 1;
+            margin-left: 8px;
+            transition: color 0.2s;
+            flex-shrink: 0;
+        }
+
+        .delete-btn:hover {
+            color: #ef4444;
+        }
+
+        .delete-btn:active {
+            opacity: 0.6;
         }
 
         .book-title {
@@ -98,10 +133,10 @@
 
         /* Completed book compact layout */
         .completed-book-item {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 12px 16px;
-            margin-bottom: 12px;
+            background: transparent;
+            border-radius: 0;
+            padding: 0;
+            margin-bottom: 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -169,17 +204,17 @@
         .memo-toggle-text {
             font-size: 14px;
             font-weight: 600;
-            color: #667eea;
+            color: #10b981;
         }
 
         .memo-toggle-icon {
             font-size: 12px;
-            color: #667eea;
+            color: #10b981;
             transition: transform 0.2s;
         }
 
         .memo-toggle-icon.open {
-            transform: rotate(180deg);
+            transform: rotate(90deg);
         }
 
         .memo-content {
@@ -204,7 +239,7 @@
 
         .memo-textarea {
             width: 100%;
-            min-height: 150px;
+            min-height: 250px;
             padding: 10px;
             border: 2px solid #e0e0e0;
             border-radius: 8px;
@@ -252,7 +287,7 @@
             display: flex;
             gap: 8px;
             align-items: center;
-            margin-bottom: 8px;
+            margin-top: 12px;
         }
 
         .progress-input {
@@ -505,7 +540,7 @@
         <h1>📚 読書管理</h1>
         
         <button class="add-book-btn" onclick="openAddBookModal()">
-            ➕ 本を追加する
+            ＋ 本を追加する
         </button>
 
         <div class="section">
@@ -557,6 +592,17 @@
             <div class="dialog-buttons">
                 <button class="dialog-btn dialog-btn-no" onclick="closeCompleteDialog()">いいえ</button>
                 <button class="dialog-btn dialog-btn-yes" onclick="confirmComplete()">はい</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Book Dialog -->
+    <div id="deleteDialog" class="dialog">
+        <div class="dialog-content">
+            <div class="dialog-message">この本を削除しますか？</div>
+            <div class="dialog-buttons">
+                <button class="dialog-btn dialog-btn-no" onclick="closeDeleteDialog()">いいえ</button>
+                <button class="dialog-btn dialog-btn-yes" onclick="confirmDelete()">はい</button>
             </div>
         </div>
     </div>
@@ -662,6 +708,35 @@
             }
         }
 
+        // Delete book
+        let currentDeleteBookId = null;
+        let isDeleteFromCompleted = false;
+
+        function openDeleteDialog(bookId, isCompleted = false) {
+            currentDeleteBookId = bookId;
+            isDeleteFromCompleted = isCompleted;
+            document.getElementById('deleteDialog').classList.add('active');
+        }
+
+        function closeDeleteDialog() {
+            document.getElementById('deleteDialog').classList.remove('active');
+            currentDeleteBookId = null;
+            isDeleteFromCompleted = false;
+        }
+
+        function confirmDelete() {
+            if (currentDeleteBookId) {
+                const bookList = isDeleteFromCompleted ? books.completed : books.reading;
+                const bookIndex = bookList.findIndex(b => b.id === currentDeleteBookId);
+                if (bookIndex !== -1) {
+                    bookList.splice(bookIndex, 1);
+                    saveData();
+                    renderBooks();
+                }
+            }
+            closeDeleteDialog();
+        }
+
         // Open complete dialog
         function openCompleteDialog(bookId) {
             currentCompleteBookId = bookId;
@@ -701,12 +776,21 @@
                     const progress = (book.currentPage / book.totalPages) * 100;
                     return `
                         <div class="book-item">
-                            <div class="book-title">${book.title}</div>
-                            ${book.author ? `<div class="book-info">✍️ ${book.author}</div>` : ''}
-                            <div class="book-info">📄 総ページ数: ${book.totalPages}ページ</div>
-                            <div class="book-info">📅 目標: ${book.targetDays}日で読了</div>
-                            <div class="book-info">📊 1日あたり: ${book.pagesPerDay}ページ</div>
+                            <div class="book-header">
+                                <div class="book-header-left">
+                                    <div class="book-title">${book.title}</div>
+                                </div>
+                                <button class="delete-btn" onclick="openDeleteDialog(${book.id}, false)">×</button>
+                            </div>
+                            ${book.author ? `<div class="book-info">${book.author}</div>` : ''}
+                            <div class="book-info"> 総ページ数: ${book.totalPages}ページ</div>
+                            <div class="book-info"> 目標: ${book.targetDays}日で読了</div>
+                            <div class="book-info"> 1日あたり: ${book.pagesPerDay}ページ</div>
                             <div class="progress-container">
+                                <div class="book-info">${book.currentPage} / ${book.totalPages}ページ (${Math.round(progress)}%)</div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${progress}%"></div>
+                                </div>
                                 <div class="progress-input-group">
                                     <input 
                                         type="number" 
@@ -719,15 +803,11 @@
                                     >
                                     <button class="update-btn" onclick="updateProgress(${book.id})">更新</button>
                                 </div>
-                                <div class="book-info">${book.currentPage} / ${book.totalPages}ページ (${Math.round(progress)}%)</div>
-                                <div class="progress-bar">
-                                    <div class="progress-fill" style="width: ${progress}%"></div>
-                                </div>
                             </div>
                             <div class="memo-section">
                                 <div class="memo-toggle" onclick="toggleMemo(${book.id})">
                                     <span class="memo-toggle-text">📝 メモ</span>
-                                    <span class="memo-toggle-icon" id="memo-icon-${book.id}">▼</span>
+                                    <span class="memo-toggle-icon" id="memo-icon-${book.id}">►</span>
                                 </div>
                                 <div class="memo-content" id="memo-content-${book.id}">
                                     <textarea 
@@ -751,34 +831,37 @@
             } else {
                 completedList.innerHTML = books.completed.map(book => `
                     <div class="book-item">
-                        <div class="completed-book-item">
-                            <div class="completed-book-left">
-                                <div class="completed-book-title">${book.title}</div>
-                                <div class="completed-book-meta">
-                                    ${book.author ? `<span>✍️ ${book.author}</span>` : ''}
-                                    <span>📄 ${book.totalPages}ページ</span>
+                        <div class="book-header">
+                            <div class="book-header-left">
+                                <div class="completed-book-item">
+                                    <div class="completed-book-left">
+                                        <div class="completed-book-title">${book.title}</div>
+                                        <div class="completed-book-meta">
+                                            ${book.author ? `<span>${book.author}</span>` : ''}
+                                            <span>${book.totalPages}ページ</span>
+                                        </div>
+                                    </div>
+                                    <div class="completed-book-right">
+                                        <div class="completed-date-compact">✨ ${book.completedDate}</div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="completed-book-right">
-                                <div class="completed-date-compact">✨ ${book.completedDate}</div>
+                            <button class="delete-btn" onclick="openDeleteDialog(${book.id}, true)">×</button>
+                        </div>
+                        <div class="memo-section">
+                            <div class="memo-toggle" onclick="toggleMemo(${book.id})">
+                                <span class="memo-toggle-text">📝 メモ</span>
+                                <span class="memo-toggle-icon" id="memo-icon-${book.id}">►</span>
+                            </div>
+                            <div class="memo-content" id="memo-content-${book.id}">
+                                <textarea 
+                                    class="memo-textarea" 
+                                    id="memo-textarea-${book.id}"
+                                    placeholder="この本についてのメモを書く..."
+                                >${book.memo || ''}</textarea>
+                                <button class="memo-save-btn" onclick="saveMemo(${book.id}, true)">保存</button>
                             </div>
                         </div>
-                        ${book.memo ? `
-                            <div class="memo-section">
-                                <div class="memo-toggle" onclick="toggleMemo(${book.id})">
-                                    <span class="memo-toggle-text">📝 メモ</span>
-                                    <span class="memo-toggle-icon" id="memo-icon-${book.id}">▼</span>
-                                </div>
-                                <div class="memo-content" id="memo-content-${book.id}">
-                                    <textarea 
-                                        class="memo-textarea" 
-                                        id="memo-textarea-${book.id}"
-                                        placeholder="この本についてのメモを書く..."
-                                    >${book.memo}</textarea>
-                                    <button class="memo-save-btn" onclick="saveMemo(${book.id}, true)">保存</button>
-                                </div>
-                            </div>
-                        ` : ''}
                     </div>
                 `).join('');
             }
