@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Books">
+    <title>BookLog</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 80px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .add-book-btn {
+            width: 100%;
+            padding: 16px;
+            background: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #667eea;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin-bottom: 30px;
+            transition: transform 0.2s;
+        }
+
+        .add-book-btn:active {
+            transform: scale(0.98);
+        }
+
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .book-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+
+        .book-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .book-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .book-info {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        /* Completed book compact layout */
+        .completed-book-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .completed-book-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .completed-book-left {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .completed-book-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        .completed-book-meta {
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .completed-book-right {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .completed-date-compact {
+            font-size: 12px;
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        /* Memo section */
+        .memo-section {
+            margin-top: 12px;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 12px;
+        }
+
+        .memo-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            padding: 8px;
+            background: #fff;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            user-select: none;
+        }
+
+        .memo-toggle:active {
+            background: #f9fafb;
+        }
+
+        .memo-toggle-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .memo-toggle-icon {
+            font-size: 12px;
+            color: #667eea;
+            transition: transform 0.2s;
+        }
+
+        .memo-toggle-icon.open {
+            transform: rotate(180deg);
+        }
+
+        .memo-content {
+            display: none;
+            animation: slideDown 0.2s ease-out;
+        }
+
+        .memo-content.open {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .memo-textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            margin-bottom: 8px;
+        }
+
+        .memo-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .memo-save-btn {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .memo-save-btn:active {
+            opacity: 0.8;
+        }
+
+        .memo-display {
+            background: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #333;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .progress-container {
+            margin-top: 12px;
+        }
+
+        .progress-input-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .progress-input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .update-btn {
+            padding: 10px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .update-btn:active {
+            opacity: 0.8;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+
+        .complete-btn {
+            width: 100%;
+            padding: 10px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+
+        .complete-btn:active {
+            opacity: 0.8;
+        }
+
+        .completed-date {
+            font-size: 13px;
+            color: #10b981;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 30px 20px;
+            font-size: 14px;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            animation: fadeIn 0.2s;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            width: 100%;
+            max-width: 400px;
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .modal-btn-cancel {
+            background: #f3f4f6;
+            color: #666;
+        }
+
+        .modal-btn-submit {
+            background: #667eea;
+            color: white;
+        }
+
+        .modal-btn:active {
+            opacity: 0.8;
+        }
+
+        .dialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+        }
+
+        .dialog.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .dialog-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            width: 100%;
+            max-width: 320px;
+            text-align: center;
+        }
+
+        .dialog-message {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 24px;
+        }
+
+        .dialog-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .dialog-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .dialog-btn-no {
+            background: #f3f4f6;
+            color: #666;
+        }
+
+        .dialog-btn-yes {
+            background: #10b981;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 読書管理</h1>
+        
+        <button class="add-book-btn" onclick="openAddBookModal()">
+            ➕ 本を追加する
+        </button>
+
+        <div class="section">
+            <div class="section-title">📖 読んでいる本</div>
+            <div id="reading-list"></div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">✅ 読み終わった本</div>
+            <div id="completed-list"></div>
+        </div>
+    </div>
+
+    <!-- Add Book Modal -->
+    <div id="addBookModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">本を追加</div>
+            <form id="addBookForm">
+                <div class="form-group">
+                    <label class="form-label">本のタイトル</label>
+                    <input type="text" class="form-input" id="bookTitle" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">著者</label>
+                    <input type="text" class="form-input" id="bookAuthor" placeholder="任意">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">総ページ数</label>
+                        <input type="number" class="form-input" id="totalPages" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">目標日数</label>
+                        <input type="number" class="form-input" id="targetDays" min="1" required>
+                    </div>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn modal-btn-cancel" onclick="closeAddBookModal()">キャンセル</button>
+                    <button type="submit" class="modal-btn modal-btn-submit">追加</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Complete Book Dialog -->
+    <div id="completeDialog" class="dialog">
+        <div class="dialog-content">
+            <div class="dialog-message">この本を読み終えますか？</div>
+            <div class="dialog-buttons">
+                <button class="dialog-btn dialog-btn-no" onclick="closeCompleteDialog()">いいえ</button>
+                <button class="dialog-btn dialog-btn-yes" onclick="confirmComplete()">はい</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let books = {
+            reading: [],
+            completed: []
+        };
+        let currentCompleteBookId = null;
+
+        // Load data from localStorage
+        function loadData() {
+            const saved = localStorage.getItem('readingTrackerData');
+            if (saved) {
+                books = JSON.parse(saved);
+            }
+            renderBooks();
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('readingTrackerData', JSON.stringify(books));
+        }
+
+        // Open add book modal
+        function openAddBookModal() {
+            document.getElementById('addBookModal').classList.add('active');
+        }
+
+        // Close add book modal
+        function closeAddBookModal() {
+            document.getElementById('addBookModal').classList.remove('active');
+            document.getElementById('addBookForm').reset();
+        }
+
+        // Add book form submission
+        document.getElementById('addBookForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('bookTitle').value;
+            const author = document.getElementById('bookAuthor').value;
+            const totalPages = parseInt(document.getElementById('totalPages').value);
+            const targetDays = parseInt(document.getElementById('targetDays').value);
+            const pagesPerDay = Math.ceil(totalPages / targetDays);
+
+            const newBook = {
+                id: Date.now(),
+                title: title,
+                author: author,
+                totalPages: totalPages,
+                targetDays: targetDays,
+                pagesPerDay: pagesPerDay,
+                currentPage: 0,
+                memo: ''
+            };
+
+            books.reading.push(newBook);
+            saveData();
+            renderBooks();
+            closeAddBookModal();
+        });
+
+        // Update progress
+        function updateProgress(bookId) {
+            const input = document.getElementById(`progress-${bookId}`);
+            const currentPage = parseInt(input.value) || 0;
+            
+            const book = books.reading.find(b => b.id === bookId);
+            if (book) {
+                book.currentPage = Math.min(currentPage, book.totalPages);
+                saveData();
+                renderBooks();
+            }
+        }
+
+        // Toggle memo
+        function toggleMemo(bookId) {
+            const content = document.getElementById(`memo-content-${bookId}`);
+            const icon = document.getElementById(`memo-icon-${bookId}`);
+            
+            if (content.classList.contains('open')) {
+                content.classList.remove('open');
+                icon.classList.remove('open');
+            } else {
+                content.classList.add('open');
+                icon.classList.add('open');
+            }
+        }
+
+        // Save memo
+        function saveMemo(bookId, isCompleted = false) {
+            const textarea = document.getElementById(`memo-textarea-${bookId}`);
+            const memoText = textarea.value;
+            
+            const bookList = isCompleted ? books.completed : books.reading;
+            const book = bookList.find(b => b.id === bookId);
+            
+            if (book) {
+                book.memo = memoText;
+                saveData();
+                renderBooks();
+            }
+        }
+
+        // Open complete dialog
+        function openCompleteDialog(bookId) {
+            currentCompleteBookId = bookId;
+            document.getElementById('completeDialog').classList.add('active');
+        }
+
+        // Close complete dialog
+        function closeCompleteDialog() {
+            document.getElementById('completeDialog').classList.remove('active');
+            currentCompleteBookId = null;
+        }
+
+        // Confirm complete
+        function confirmComplete() {
+            if (currentCompleteBookId) {
+                const bookIndex = books.reading.findIndex(b => b.id === currentCompleteBookId);
+                if (bookIndex !== -1) {
+                    const book = books.reading[bookIndex];
+                    book.completedDate = new Date().toLocaleDateString('ja-JP');
+                    books.completed.unshift(book);
+                    books.reading.splice(bookIndex, 1);
+                    saveData();
+                    renderBooks();
+                }
+            }
+            closeCompleteDialog();
+        }
+
+        // Render books
+        function renderBooks() {
+            // Render reading list
+            const readingList = document.getElementById('reading-list');
+            if (books.reading.length === 0) {
+                readingList.innerHTML = '<div class="empty-state">読んでいる本がありません</div>';
+            } else {
+                readingList.innerHTML = books.reading.map(book => {
+                    const progress = (book.currentPage / book.totalPages) * 100;
+                    return `
+                        <div class="book-item">
+                            <div class="book-title">${book.title}</div>
+                            ${book.author ? `<div class="book-info">✍️ ${book.author}</div>` : ''}
+                            <div class="book-info">📄 総ページ数: ${book.totalPages}ページ</div>
+                            <div class="book-info">📅 目標: ${book.targetDays}日で読了</div>
+                            <div class="book-info">📊 1日あたり: ${book.pagesPerDay}ページ</div>
+                            <div class="progress-container">
+                                <div class="progress-input-group">
+                                    <input 
+                                        type="number" 
+                                        class="progress-input" 
+                                        id="progress-${book.id}"
+                                        placeholder="現在のページ"
+                                        min="0"
+                                        max="${book.totalPages}"
+                                        value="${book.currentPage}"
+                                    >
+                                    <button class="update-btn" onclick="updateProgress(${book.id})">更新</button>
+                                </div>
+                                <div class="book-info">${book.currentPage} / ${book.totalPages}ページ (${Math.round(progress)}%)</div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${progress}%"></div>
+                                </div>
+                            </div>
+                            <div class="memo-section">
+                                <div class="memo-toggle" onclick="toggleMemo(${book.id})">
+                                    <span class="memo-toggle-text">📝 メモ</span>
+                                    <span class="memo-toggle-icon" id="memo-icon-${book.id}">▼</span>
+                                </div>
+                                <div class="memo-content" id="memo-content-${book.id}">
+                                    <textarea 
+                                        class="memo-textarea" 
+                                        id="memo-textarea-${book.id}"
+                                        placeholder="この本についてのメモを書く..."
+                                    >${book.memo || ''}</textarea>
+                                    <button class="memo-save-btn" onclick="saveMemo(${book.id})">保存</button>
+                                </div>
+                            </div>
+                            <button class="complete-btn" onclick="openCompleteDialog(${book.id})">読了</button>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Render completed list
+            const completedList = document.getElementById('completed-list');
+            if (books.completed.length === 0) {
+                completedList.innerHTML = '<div class="empty-state">読み終わった本がありません</div>';
+            } else {
+                completedList.innerHTML = books.completed.map(book => `
+                    <div class="book-item">
+                        <div class="completed-book-item">
+                            <div class="completed-book-left">
+                                <div class="completed-book-title">${book.title}</div>
+                                <div class="completed-book-meta">
+                                    ${book.author ? `<span>✍️ ${book.author}</span>` : ''}
+                                    <span>📄 ${book.totalPages}ページ</span>
+                                </div>
+                            </div>
+                            <div class="completed-book-right">
+                                <div class="completed-date-compact">✨ ${book.completedDate}</div>
+                            </div>
+                        </div>
+                        ${book.memo ? `
+                            <div class="memo-section">
+                                <div class="memo-toggle" onclick="toggleMemo(${book.id})">
+                                    <span class="memo-toggle-text">📝 メモ</span>
+                                    <span class="memo-toggle-icon" id="memo-icon-${book.id}">▼</span>
+                                </div>
+                                <div class="memo-content" id="memo-content-${book.id}">
+                                    <textarea 
+                                        class="memo-textarea" 
+                                        id="memo-textarea-${book.id}"
+                                        placeholder="この本についてのメモを書く..."
+                                    >${book.memo}</textarea>
+                                    <button class="memo-save-btn" onclick="saveMemo(${book.id}, true)">保存</button>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Initialize app
+        loadData();
+    </script>
+</body>
+</html>
