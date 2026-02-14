@@ -220,7 +220,7 @@
             margin-bottom: 8px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             gap: 12px;
         }
 
@@ -251,27 +251,26 @@
         .completed-book-right {
             text-align: right;
             white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .completed-date-compact {
             font-size: 12px;
             color: #10b981;
             font-weight: 600;
-        }
-
-        .edit-date-btn {
-            background: none;
-            border: none;
-            color: #999;
-            font-size: 12px;
             cursor: pointer;
-            padding: 2px 4px;
-            margin-left: 4px;
-            transition: color 0.2s;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.2s;
+            display: inline-block;
         }
 
-        .edit-date-btn:hover {
-            color: #667eea;
+        .completed-date-compact:hover {
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .completed-date-compact:active {
+            background: rgba(16, 185, 129, 0.2);
         }
 
         /* Memo section */
@@ -990,9 +989,8 @@
                                         </div>
                                     </div>
                                     <div class="completed-book-right">
-                                        <div class="completed-date-compact">
+                                        <div class="completed-date-compact" onclick="openEditDateModal(${book.id})" title="日付を編集">
                                             ✨ ${book.completedDate}
-                                            <button class="edit-date-btn" onclick="event.stopPropagation(); openEditDateModal(${book.id})" title="日付を編集">✏️</button>
                                         </div>
                                     </div>
                                 </div>
