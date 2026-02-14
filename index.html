@@ -176,15 +176,18 @@
             display: none;
         }
 
-        .book-item.collapsed .completed-book-info-row {
+        .book-item.collapsed .completed-book-item {
             display: flex;
-            flex-direction: row;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
         }
 
-        .book-item.collapsed .book-header-right {
-            display: flex;
+        .book-item.collapsed .completed-book-info-row {
+            margin-bottom: 0;
+        }
+
+        .book-item.collapsed .completed-book-item > .book-header-right {
+            display: flex !important;
         }
 
         .book-item.collapsed {
@@ -1037,20 +1040,18 @@
                                 </div>
                             </div>
                             <div class="completed-book-info-row">
-                                <div>
-                                    <div class="completed-book-title">${book.title}</div>
-                                    ${book.author ? `<div class="completed-book-author">${book.author}</div>` : ''}
-                                </div>
-                                <div class="book-header-right">
-                                    <button class="drag-handle" 
-                                            onmousedown="handleDragStart(event, ${index}, 'completed')" 
-                                            onmouseup="handleDragEnd(event)"
-                                            ontouchstart="handleDragStart(event, ${index}, 'completed')"
-                                            ontouchend="handleDragEnd(event)"
-                                            title="順番を変更">⋮⋮</button>
-                                    <button class="collapse-btn" onclick="toggleCollapse(${book.id})" title="${isCollapsed ? '展開' : '折りたたむ'}">${collapseIcon}</button>
-                                    <button class="delete-btn" onclick="openDeleteDialog(${book.id}, true)">×</button>
-                                </div>
+                                <div class="completed-book-title">${book.title}</div>
+                                ${book.author ? `<div class="completed-book-author">${book.author}</div>` : ''}
+                            </div>
+                            <div class="book-header-right" style="display: none;">
+                                <button class="drag-handle" 
+                                        onmousedown="handleDragStart(event, ${index}, 'completed')" 
+                                        onmouseup="handleDragEnd(event)"
+                                        ontouchstart="handleDragStart(event, ${index}, 'completed')"
+                                        ontouchend="handleDragEnd(event)"
+                                        title="順番を変更">⋮⋮</button>
+                                <button class="collapse-btn" onclick="toggleCollapse(${book.id})" title="${isCollapsed ? '展開' : '折りたたむ'}">${collapseIcon}</button>
+                                <button class="delete-btn" onclick="openDeleteDialog(${book.id}, true)">×</button>
                             </div>
                         </div>
                         <div class="memo-section">
