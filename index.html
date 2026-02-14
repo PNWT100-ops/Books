@@ -157,8 +157,7 @@
             display: none;
         }
 
-        .book-item.collapsed .completed-book-meta,
-        .book-item.collapsed .completed-book-right {
+        .book-item.collapsed .completed-book-info-row {
             display: none;
         }
 
@@ -217,41 +216,31 @@
             background: transparent;
             border-radius: 0;
             padding: 0;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 12px;
-        }
-
-        .completed-book-item:last-child {
             margin-bottom: 0;
         }
 
-        .completed-book-left {
-            flex: 1;
-            min-width: 0;
+        .completed-book-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .completed-book-info-row {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
 
         .completed-book-title {
             font-size: 15px;
             font-weight: 600;
             color: #333;
-            margin-bottom: 2px;
         }
 
-        .completed-book-meta {
+        .completed-book-author {
             font-size: 12px;
             color: #666;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .completed-book-right {
-            text-align: right;
-            white-space: nowrap;
-            flex-shrink: 0;
         }
 
         .completed-date-compact {
@@ -978,27 +967,20 @@
                     <div class="book-item${collapseClass}" draggable="true"
                          ondragstart="handleDragStart(event, ${index}, 'completed')"
                          ondragend="handleDragEnd(event)">
-                        <div class="book-header">
-                            <div class="book-header-left">
-                                <div class="completed-book-item">
-                                    <div class="completed-book-left">
-                                        <div class="completed-book-title">${book.title}</div>
-                                        <div class="completed-book-meta">
-                                            ${book.author ? `<span>${book.author}</span>` : ''}
-                                            <span>${book.totalPages}ページ</span>
-                                        </div>
-                                    </div>
-                                    <div class="completed-book-right">
-                                        <div class="completed-date-compact" onclick="openEditDateModal(${book.id})" title="日付を編集">
-                                            ✨ ${book.completedDate}
-                                        </div>
-                                    </div>
+                        <div class="completed-book-item">
+                            <div class="completed-book-header-row">
+                                <div class="completed-date-compact" onclick="openEditDateModal(${book.id})" title="日付を編集">
+                                    ✨ ${book.completedDate}
+                                </div>
+                                <div class="book-header-right">
+                                    <button class="drag-handle" title="順番を変更">⋮⋮</button>
+                                    <button class="collapse-btn" onclick="toggleCollapse(${book.id})" title="${isCollapsed ? '展開' : '折りたたむ'}">${collapseIcon}</button>
+                                    <button class="delete-btn" onclick="openDeleteDialog(${book.id}, true)">×</button>
                                 </div>
                             </div>
-                            <div class="book-header-right">
-                                <button class="drag-handle" title="順番を変更">⋮⋮</button>
-                                <button class="collapse-btn" onclick="toggleCollapse(${book.id})" title="${isCollapsed ? '展開' : '折りたたむ'}">${collapseIcon}</button>
-                                <button class="delete-btn" onclick="openDeleteDialog(${book.id}, true)">×</button>
+                            <div class="completed-book-info-row">
+                                <div class="completed-book-title">${book.title}</div>
+                                ${book.author ? `<div class="completed-book-author">${book.author}</div>` : ''}
                             </div>
                         </div>
                         <div class="memo-section">
