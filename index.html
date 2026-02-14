@@ -102,6 +102,7 @@
             font-size: 18px;
             flex-shrink: 0;
             touch-action: none;
+            user-select: none;
         }
 
         .drag-handle:active {
@@ -110,6 +111,11 @@
 
         .book-item.dragging {
             opacity: 0.5;
+            background: #e8e8e8;
+        }
+
+        .book-item.drag-over {
+            border-top: 3px solid #667eea;
         }
 
         .collapse-btn {
@@ -351,6 +357,27 @@
 
         .memo-save-btn:active {
             opacity: 0.8;
+        }
+
+        .memo-copy-btn {
+            padding: 8px 16px;
+            background: #e5e7eb;
+            color: #666;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: 8px;
+        }
+
+        .memo-copy-btn:active {
+            opacity: 0.8;
+        }
+
+        .memo-buttons {
+            display: flex;
+            align-items: center;
         }
 
         .memo-display {
@@ -886,15 +913,18 @@
                     const collapseClass = isCollapsed ? ' collapsed' : '';
                     const collapseIcon = isCollapsed ? '◱' : '◲';
                     return `
-                        <div class="book-item${collapseClass}" draggable="true" 
-                             ondragstart="handleDragStart(event, ${index}, 'reading')"
-                             ondragend="handleDragEnd(event)">
+                        <div class="book-item${collapseClass}">
                             <div class="book-header">
                                 <div class="book-header-left">
                                     <div class="book-title">${book.title}</div>
                                 </div>
                                 <div class="book-header-right">
-                                    <button class="drag-handle" title="順番を変更">⋮⋮</button>
+                                    <button class="drag-handle" 
+                                            onmousedown="handleDragStart(event, ${index}, 'reading')" 
+                                            onmouseup="handleDragEnd(event)"
+                                            ontouchstart="handleDragStart(event, ${index}, 'reading')"
+                                            ontouchend="handleDragEnd(event)"
+                                            title="順番を変更">⋮⋮</button>
                                     <button class="collapse-btn" onclick="toggleCollapse(${book.id})" title="${isCollapsed ? '展開' : '折りたたむ'}">${collapseIcon}</button>
                                     <button class="delete-btn" onclick="openDeleteDialog(${book.id}, false)">×</button>
                                 </div>
@@ -932,7 +962,10 @@
                                         id="memo-textarea-${book.id}"
                                         placeholder="この本についてのメモを書く..."
                                     >${book.memo || ''}</textarea>
-                                    <button class="memo-save-btn" onclick="saveMemo(${book.id})">保存</button>
+                                    <div class="memo-buttons">
+                                        <button class="memo-copy-btn" onclick="copyMemo(${book.id})">コピー</button>
+                                        <button class="memo-save-btn" onclick="saveMemo(${book.id})">保存</button>
+                                    </div>
                                 </div>
                             </div>
                             <button class="complete-btn" onclick="openCompleteDialog(${book.id})">読了</button>
@@ -940,8 +973,10 @@
                     `;
                 }).join('');
                 
-                // Add dragover listener to reading list
-                readingList.addEventListener('dragover', handleDragOver);
+                // Add drag event listeners
+                const readingListEl = document.getElementById('reading-list');
+                readingListEl.addEventListener('mousemove', handleDragOver);
+                readingListEl.addEventListener('touchmove', handleDragOver);
                 
                 // Restore open memo states
                 openMemoIds.forEach(bookId => {
@@ -964,16 +999,19 @@
                     const collapseClass = isCollapsed ? ' collapsed' : '';
                     const collapseIcon = isCollapsed ? '◱' : '◲';
                     return `
-                    <div class="book-item${collapseClass}" draggable="true"
-                         ondragstart="handleDragStart(event, ${index}, 'completed')"
-                         ondragend="handleDragEnd(event)">
+                    <div class="book-item${collapseClass}">
                         <div class="completed-book-item">
                             <div class="completed-book-header-row">
                                 <div class="completed-date-compact" onclick="openEditDateModal(${book.id})" title="日付を編集">
                                     ✨ ${book.completedDate}
                                 </div>
                                 <div class="book-header-right">
-                                    <button class="drag-handle" title="順番を変更">⋮⋮</button>
+                                    <button class="drag-handle" 
+                                            onmousedown="handleDragStart(event, ${index}, 'completed')" 
+                                            onmouseup="handleDragEnd(event)"
+                                            ontouchstart="handleDragStart(event, ${index}, 'completed')"
+                                            ontouchend="handleDragEnd(event)"
+                                            title="順番を変更">⋮⋮</button>
                                     <button class="collapse-btn" onclick="toggleCollapse(${book.id})" title="${isCollapsed ? '展開' : '折りたたむ'}">${collapseIcon}</button>
                                     <button class="delete-btn" onclick="openDeleteDialog(${book.id}, true)">×</button>
                                 </div>
@@ -994,14 +1032,19 @@
                                     id="memo-textarea-${book.id}"
                                     placeholder="この本についてのメモを書く..."
                                 >${book.memo || ''}</textarea>
-                                <button class="memo-save-btn" onclick="saveMemo(${book.id}, true)">保存</button>
+                                <div class="memo-buttons">
+                                    <button class="memo-copy-btn" onclick="copyMemo(${book.id})">コピー</button>
+                                    <button class="memo-save-btn" onclick="saveMemo(${book.id}, true)">保存</button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 `}).join('');
                 
-                // Add dragover listener to completed list
-                completedList.addEventListener('dragover', handleDragOver);
+                // Add drag event listeners
+                const completedListEl = document.getElementById('completed-list');
+                completedListEl.addEventListener('mousemove', handleDragOver);
+                completedListEl.addEventListener('touchmove', handleDragOver);
                 
                 // Restore open memo states for completed books
                 openMemoIds.forEach(bookId => {
@@ -1026,30 +1069,54 @@
         }
 
         // Drag and drop functions
+        let dragStartY = 0;
+        
         function handleDragStart(e, index, listType) {
-            draggedElement = e.target.closest('.book-item');
+            const bookItem = e.target.closest('.book-item');
+            if (!bookItem) return;
+            
+            draggedElement = bookItem;
             draggedIndex = index;
             draggedList = listType;
-            draggedElement.classList.add('dragging');
+            dragStartY = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            setTimeout(() => {
+                if (draggedElement) {
+                    draggedElement.classList.add('dragging');
+                }
+            }, 0);
         }
 
         function handleDragOver(e) {
             e.preventDefault();
-            const afterElement = getDragAfterElement(e.currentTarget, e.clientY);
-            const draggable = document.querySelector('.dragging');
+            if (!draggedElement) return;
+            
+            const container = e.currentTarget;
+            const afterElement = getDragAfterElement(container, e.clientY || (e.touches && e.touches[0].clientY));
+            
+            // Remove all drag-over classes
+            container.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+            
             if (afterElement == null) {
-                e.currentTarget.appendChild(draggable);
+                container.appendChild(draggedElement);
             } else {
-                e.currentTarget.insertBefore(draggable, afterElement);
+                container.insertBefore(draggedElement, afterElement);
+                afterElement.classList.add('drag-over');
             }
         }
 
         function handleDragEnd(e) {
-            const container = e.target.closest('#reading-list, #completed-list');
+            if (!draggedElement) return;
+            
+            const listId = draggedList === 'reading' ? 'reading-list' : 'completed-list';
+            const container = document.getElementById(listId);
             if (!container) return;
             
             const items = [...container.querySelectorAll('.book-item')];
             const newIndex = items.indexOf(draggedElement);
+            
+            // Remove drag-over classes
+            container.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
             
             if (newIndex !== -1 && newIndex !== draggedIndex) {
                 const bookList = draggedList === 'reading' ? books.reading : books.completed;
@@ -1058,10 +1125,14 @@
                 saveData();
             }
             
-            draggedElement.classList.remove('dragging');
+            if (draggedElement) {
+                draggedElement.classList.remove('dragging');
+            }
+            
             draggedElement = null;
             draggedIndex = null;
             draggedList = null;
+            
             renderBooks();
         }
 
@@ -1078,6 +1149,25 @@
                     return closest;
                 }
             }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        // Copy memo function
+        function copyMemo(bookId) {
+            const textarea = document.getElementById(`memo-textarea-${bookId}`);
+            if (textarea && textarea.value) {
+                navigator.clipboard.writeText(textarea.value).then(() => {
+                    // Visual feedback
+                    const copyBtn = event.target;
+                    const originalText = copyBtn.textContent;
+                    copyBtn.textContent = 'コピー済み';
+                    setTimeout(() => {
+                        copyBtn.textContent = originalText;
+                    }, 1500);
+                }).catch(err => {
+                    console.error('コピーに失敗しました:', err);
+                    alert('コピーに失敗しました');
+                });
+            }
         }
 
         // Edit date functions
