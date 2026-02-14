@@ -101,7 +101,6 @@
             color: #999;
             font-size: 18px;
             flex-shrink: 0;
-            touch-action: none;
             user-select: none;
         }
 
@@ -116,6 +115,12 @@
 
         .book-item.drag-over {
             border-top: 3px solid #667eea;
+        }
+
+        /* Ensure scrollable areas */
+        .completed-book-header-row,
+        .completed-book-info-row {
+            pointer-events: auto;
         }
 
         .collapse-btn {
@@ -163,8 +168,23 @@
             display: none;
         }
 
-        .book-item.collapsed .completed-book-info-row {
+        .book-item.collapsed .completed-book-header-row {
             display: none;
+        }
+
+        .book-item.collapsed .completed-book-author {
+            display: none;
+        }
+
+        .book-item.collapsed .completed-book-info-row {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .book-item.collapsed .book-header-right {
+            display: flex;
         }
 
         .book-item.collapsed {
@@ -1017,8 +1037,20 @@
                                 </div>
                             </div>
                             <div class="completed-book-info-row">
-                                <div class="completed-book-title">${book.title}</div>
-                                ${book.author ? `<div class="completed-book-author">${book.author}</div>` : ''}
+                                <div>
+                                    <div class="completed-book-title">${book.title}</div>
+                                    ${book.author ? `<div class="completed-book-author">${book.author}</div>` : ''}
+                                </div>
+                                <div class="book-header-right">
+                                    <button class="drag-handle" 
+                                            onmousedown="handleDragStart(event, ${index}, 'completed')" 
+                                            onmouseup="handleDragEnd(event)"
+                                            ontouchstart="handleDragStart(event, ${index}, 'completed')"
+                                            ontouchend="handleDragEnd(event)"
+                                            title="順番を変更">⋮⋮</button>
+                                    <button class="collapse-btn" onclick="toggleCollapse(${book.id})" title="${isCollapsed ? '展開' : '折りたたむ'}">${collapseIcon}</button>
+                                    <button class="delete-btn" onclick="openDeleteDialog(${book.id}, true)">×</button>
+                                </div>
                             </div>
                         </div>
                         <div class="memo-section">
@@ -1070,6 +1102,8 @@
 
         // Drag and drop functions
         let dragStartY = 0;
+        let isDragging = false;
+        let dragThreshold = 5; // pixels to move before considering it a drag
         
         function handleDragStart(e, index, listType) {
             const bookItem = e.target.closest('.book-item');
@@ -1079,17 +1113,40 @@
             draggedIndex = index;
             draggedList = listType;
             dragStartY = e.clientY || (e.touches && e.touches[0].clientY);
+            isDragging = false;
             
-            setTimeout(() => {
-                if (draggedElement) {
-                    draggedElement.classList.add('dragging');
+            // Add move listener to detect actual drag
+            const moveHandler = (moveEvent) => {
+                const currentY = moveEvent.clientY || (moveEvent.touches && moveEvent.touches[0].clientY);
+                if (Math.abs(currentY - dragStartY) > dragThreshold) {
+                    isDragging = true;
+                    if (draggedElement) {
+                        draggedElement.classList.add('dragging');
+                    }
+                    document.removeEventListener('mousemove', moveHandler);
+                    document.removeEventListener('touchmove', moveHandler);
                 }
-            }, 0);
+            };
+            
+            document.addEventListener('mousemove', moveHandler);
+            document.addEventListener('touchmove', moveHandler);
+            
+            // Clean up listener on release
+            const cleanupHandler = () => {
+                document.removeEventListener('mousemove', moveHandler);
+                document.removeEventListener('touchmove', moveHandler);
+                document.removeEventListener('mouseup', cleanupHandler);
+                document.removeEventListener('touchend', cleanupHandler);
+            };
+            
+            document.addEventListener('mouseup', cleanupHandler, { once: true });
+            document.addEventListener('touchend', cleanupHandler, { once: true });
         }
 
         function handleDragOver(e) {
+            if (!isDragging || !draggedElement) return;
+            
             e.preventDefault();
-            if (!draggedElement) return;
             
             const container = e.currentTarget;
             const afterElement = getDragAfterElement(container, e.clientY || (e.touches && e.touches[0].clientY));
@@ -1108,32 +1165,36 @@
         function handleDragEnd(e) {
             if (!draggedElement) return;
             
-            const listId = draggedList === 'reading' ? 'reading-list' : 'completed-list';
-            const container = document.getElementById(listId);
-            if (!container) return;
-            
-            const items = [...container.querySelectorAll('.book-item')];
-            const newIndex = items.indexOf(draggedElement);
-            
-            // Remove drag-over classes
-            container.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-            
-            if (newIndex !== -1 && newIndex !== draggedIndex) {
-                const bookList = draggedList === 'reading' ? books.reading : books.completed;
-                const [movedBook] = bookList.splice(draggedIndex, 1);
-                bookList.splice(newIndex, 0, movedBook);
-                saveData();
-            }
-            
-            if (draggedElement) {
-                draggedElement.classList.remove('dragging');
+            // Only process if it was actually a drag
+            if (isDragging) {
+                const listId = draggedList === 'reading' ? 'reading-list' : 'completed-list';
+                const container = document.getElementById(listId);
+                if (container) {
+                    const items = [...container.querySelectorAll('.book-item')];
+                    const newIndex = items.indexOf(draggedElement);
+                    
+                    // Remove drag-over classes
+                    container.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+                    
+                    if (newIndex !== -1 && newIndex !== draggedIndex) {
+                        const bookList = draggedList === 'reading' ? books.reading : books.completed;
+                        const [movedBook] = bookList.splice(draggedIndex, 1);
+                        bookList.splice(newIndex, 0, movedBook);
+                        saveData();
+                    }
+                }
+                
+                if (draggedElement) {
+                    draggedElement.classList.remove('dragging');
+                }
+                
+                renderBooks();
             }
             
             draggedElement = null;
             draggedIndex = null;
             draggedList = null;
-            
-            renderBooks();
+            isDragging = false;
         }
 
         function getDragAfterElement(container, y) {
