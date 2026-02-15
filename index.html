@@ -775,12 +775,21 @@
             if (saved) {
                 books = JSON.parse(saved);
             }
+            
+            // Load collapsed state
+            const savedCollapsed = localStorage.getItem('collapsedBookIds');
+            if (savedCollapsed) {
+                collapsedBookIds = new Set(JSON.parse(savedCollapsed));
+            }
+            
             renderBooks();
         }
 
         // Save data to localStorage
         function saveData() {
             localStorage.setItem('readingTrackerData', JSON.stringify(books));
+            // Save collapsed state
+            localStorage.setItem('collapsedBookIds', JSON.stringify([...collapsedBookIds]));
         }
 
         // Open add book modal
@@ -1098,6 +1107,7 @@
             } else {
                 collapsedBookIds.add(bookId);
             }
+            saveData(); // Save collapsed state
             renderBooks();
         }
 
