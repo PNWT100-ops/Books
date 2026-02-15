@@ -172,7 +172,7 @@
             display: none;
         }
 
-        .book-item.collapsed .completed-book-author {
+        .book-item.collapsed .completed-book-meta-row {
             display: none;
         }
 
@@ -267,9 +267,25 @@
             color: #333;
         }
 
+        .completed-book-meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
         .completed-book-author {
             font-size: 12px;
             color: #666;
+            flex: 0 1 auto;
+            min-width: 0;
+        }
+
+        .completed-book-pages {
+            font-size: 11px;
+            color: #999;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .completed-date-compact {
@@ -1050,7 +1066,10 @@
                             </div>
                             <div class="completed-book-info-row">
                                 <div class="completed-book-title">${book.title}</div>
-                                ${book.author ? `<div class="completed-book-author">${book.author}</div>` : ''}
+                                <div class="completed-book-meta-row">
+                                    <div class="completed-book-author">${book.author || ''}</div>
+                                    <div class="completed-book-pages">${book.totalPages}ページ</div>
+                                </div>
                             </div>
                             <div class="book-header-right" style="display: none;">
                                 <button class="drag-handle" 
